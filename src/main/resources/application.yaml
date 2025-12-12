@@ -4,8 +4,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/billsplitter
-    username: ${DB_USERNAME:billsplitter}
-    password: ${DB_PASSWORD:password}
+    username: postgres
+    password: postgres
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -31,6 +31,18 @@ spring:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/billsplitter}
           jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/billsplitter/protocol/openid-connect/certs}
+
+keycloak:
+  client-id: ${KEYCLOAK_CLIENT_ID:billsplitter-api}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET:}
+  token-uri: ${KEYCLOAK_TOKEN_URI:${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/token}
+  logout-uri: ${KEYCLOAK_LOGOUT_URI:${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/logout}
+  admin:
+    server-url: ${KEYCLOAK_ADMIN_SERVER_URL:http://localhost:8080}
+    realm: ${KEYCLOAK_ADMIN_REALM:billsplitter}
+    client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
+    username: ${KEYCLOAK_ADMIN_USERNAME:admin}
+    password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
 
 logging:
   level:

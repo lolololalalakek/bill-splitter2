@@ -25,9 +25,16 @@ import java.util.Objects;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class BillCalculationServiceImpl implements BillCalculationService {
 
+    // количество знаков после запятой для денег (копейки)
     private static final int MONEY_SCALE = 2;
+
+    // дополнительная точность для промежуточных расчетов
     private static final int EXTRA_SCALE = 4;
+
+    // константа 100 для расчета процентов
     private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
+
+    // одна копейка для распределения остатка
     private static final BigDecimal ONE_CENT = new BigDecimal("0.01");
 
     @Value("${app.bill.service-fee-percent}")

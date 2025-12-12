@@ -16,6 +16,7 @@ import uz.billsplitter2.demo.security.KeycloakJwtConverter;
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
+@org.springframework.context.annotation.Profile("!dev")
 public class SecurityConfig {
 
     private final KeycloakJwtConverter jwtConverter;
@@ -25,24 +26,15 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                // открытые эндпоинты
                 .requestMatchers("/actuator/health").permitAll()
-                // swagger ui без авторизации
+                .requestMatchers("/api/v1/auth/waiters/login", "/api/v1/auth/waiters/refresh", "/api/v1/auth/waiters/logout").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                // админские эндпоинты
-                .requestMatchers(HttpMethod.POST, "/api/v1/admin/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/v1/admin/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/v1/admin/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/v1/admin/**").hasRole("ADMIN")
-                // все остальные требуют авторизацию
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/v1/waiters/**", "/api/v1/bills/**", "/api/v1/auth/**").hasAnyRole("WAITER", "ADMIN")
                 .anyRequest().authenticated()
             )
-            .oauth2ResourceServer(oauth2 -> oauth2
-                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConverter))
-            )
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            );
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConverter)))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();
     }
 }

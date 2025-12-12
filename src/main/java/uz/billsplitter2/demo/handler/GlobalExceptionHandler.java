@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import uz.billsplitter2.demo.dto.response.ErrorResponse;
 import uz.billsplitter2.demo.exception.ApplicationException;
+import uz.billsplitter2.demo.exception.KeycloakException;
 
 import java.util.stream.Collectors;
 
@@ -42,6 +43,13 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining("; "));
         ErrorResponse body = ErrorResponse.of("VALIDATION_ERROR", message, HttpStatus.BAD_REQUEST, request.getRequestURI());
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(KeycloakException.class)
+    public ResponseEntity<ErrorResponse> handleKeycloakException(KeycloakException ex, HttpServletRequest request) {
+        log.error("Keycloak integration error: {}", ex.getMessage());
+        ErrorResponse body = ErrorResponse.of("KEYCLOAK_ERROR", ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 
     @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
