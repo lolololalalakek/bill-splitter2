@@ -52,6 +52,7 @@ public class GuestServiceImpl implements GuestService {
         return guestMapper.toDto(saved);
     }
 
+    // получение списка гостей компании
     @Override
     @Transactional(readOnly = true)
     public List<GuestDto> getGuestsByParty(UUID partyId) {
@@ -63,6 +64,7 @@ public class GuestServiceImpl implements GuestService {
                 .toList();
     }
 
+    // удаление гостя из компании
     @Override
     public void removeGuest(UUID partyId, UUID guestId) {
         Party party = findPartyOrThrow(partyId);
@@ -87,6 +89,7 @@ public class GuestServiceImpl implements GuestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Party not found with id: " + id));
     }
 
+    // проверка доступа к компании (только свой официант или админ)
     private void checkAccess(Party party) {
         if (!securityContext.isAdmin() && !party.getWaiter().getId().equals(securityContext.getCurrentWaiterId())) {
             throw new UnauthorizedException("You don't have access to this party");

@@ -30,10 +30,12 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
     private final BillMapper billMapper;
     private final SecurityContext securityContext;
 
+    // получение закрытых счетов с фильтрацией по датам и официанту
     @Override
     public List<BillHistoryDto> getClosedBills(OffsetDateTime startDate, OffsetDateTime endDate, UUID waiterId) {
         UUID effectiveWaiterId = waiterId;
 
+        // обычный официант видит только свои счета
         if (!securityContext.isAdmin()) {
             effectiveWaiterId = securityContext.getCurrentWaiterId();
         }
@@ -44,6 +46,7 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
                 .toList();
     }
 
+    // получение детальной информации о счете
     @Override
     public BillDto getBillDetails(UUID billId) {
         Bill bill = billRepository.findById(billId)
@@ -56,6 +59,7 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
         return billMapper.toDto(bill);
     }
 
+    // получение аналитики по закрытым счетам (только админ)
     @Override
     public AnalyticsDto getAnalytics(OffsetDateTime startDate, OffsetDateTime endDate) {
         if (!securityContext.isAdmin()) {

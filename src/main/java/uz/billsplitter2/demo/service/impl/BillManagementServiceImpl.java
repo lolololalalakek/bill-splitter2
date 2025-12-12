@@ -51,6 +51,7 @@ public class BillManagementServiceImpl implements BillManagementService {
     @Value("${app.bill.service-fee-percent}")
     BigDecimal serviceFeePercent;
 
+    // создание нового счета для компании
     @Override
     public BillDto createBill(CreateBillDto dto) {
         Party party = partyRepository.findById(dto.partyId())
@@ -82,6 +83,7 @@ public class BillManagementServiceImpl implements BillManagementService {
         return billMapper.toDto(saved);
     }
 
+    // получение счета по id с проверкой доступа
     @Override
     @Transactional(readOnly = true)
     public BillDto getBillById(UUID id) {
@@ -90,6 +92,7 @@ public class BillManagementServiceImpl implements BillManagementService {
         return billMapper.toDto(bill);
     }
 
+    // добавление позиции в счет с привязкой к гостям
     @Override
     public OrderItemDto addOrderItem(UUID billId, AddOrderItemDto dto) {
         Bill bill = findBillOrThrow(billId);
@@ -99,11 +102,13 @@ public class BillManagementServiceImpl implements BillManagementService {
             throw new BusinessLogicException("Cannot add items to closed bill");
         }
 
+        // проверка существования всех гостей
         List<Guest> guests = guestRepository.findAllById(dto.guestIds());
         if (guests.size() != dto.guestIds().size()) {
             throw new ResourceNotFoundException("Some guests not found");
         }
 
+        // проверка что все гости принадлежат этой компании
         for (Guest guest : guests) {
             if (!guest.getParty().getId().equals(bill.getParty().getId())) {
                 throw new BusinessLogicException("Guest does not belong to this party");
@@ -122,6 +127,7 @@ public class BillManagementServiceImpl implements BillManagementService {
         return orderItemMapper.toDto(saved);
     }
 
+    // удаление позиции из счета
     @Override
     public void removeOrderItem(UUID billId, UUID itemId) {
         Bill bill = findBillOrThrow(billId);
@@ -141,6 +147,7 @@ public class BillManagementServiceImpl implements BillManagementService {
         orderItemRepository.delete(orderItem);
     }
 
+    // расчет счета без закрытия (предпросмотр)
     @Override
     @Transactional(readOnly = true)
     public BillResponseDto calculateBill(UUID billId) {
@@ -158,6 +165,7 @@ public class BillManagementServiceImpl implements BillManagementService {
         return calculationService.split(bill.toBillRequestDto());
     }
 
+    // закрытие счета с финальным расчетом
     @Override
     public BillDto closeBill(UUID billId) {
         Bill bill = findBillOrThrow(billId);
@@ -207,12 +215,14 @@ public class BillManagementServiceImpl implements BillManagementService {
                 .orElseThrow(() -> new ResourceNotFoundException("Bill not found with id: " + id));
     }
 
+    // проверка доступа к счету (только свой официант или админ)
     private void checkAccess(Party party) {
         if (!securityContext.isAdmin() && !party.getWaiter().getId().equals(securityContext.getCurrentWaiterId())) {
             throw new UnauthorizedException("You don't have access to this bill");
         }
     }
 
+    // генерация уникального номера счета
     private String generateBillNumber() {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         String random = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
